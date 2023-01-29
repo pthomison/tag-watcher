@@ -13,7 +13,7 @@ spec:
   destination: 127.0.0.1:15555/python
   suffix: "testing"
   regex: 
-    match: "3.9(.*)-alpine(.*)"
+    match: "3.9.16-alpine(.*)"
     ignore: "windows"
   actions:
   - command:

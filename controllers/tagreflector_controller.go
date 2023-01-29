@@ -47,6 +47,8 @@ type TagReflectorReconciler struct {
 func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
+	fmt.Println("--- starting ---")
+
 	tr := &v1alpha1.TagReflector{}
 	err := r.Client.Get(ctx, req.NamespacedName, tr)
 	errcheck.Check(err)
@@ -55,26 +57,44 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	ignore := regexp.MustCompile(tr.Spec.Regex.Ignore)
 	tags := registryutils.ListRepository(tr.Spec.Repository)
 
-	var matchedTags []string
+	if tr.Status.MatchedTags == nil {
+		tr.Status.MatchedTags = make(map[string]*tagreflectorv1alpha1.MatchedTagStatus)
+	}
+
 	for _, t := range tags {
 		if !ignore.MatchString(t) && match.FindString(t) == t {
-			matchedTags = append(matchedTags, t)
+			if tr.Status.MatchedTags[t] == nil {
+				tr.Status.MatchedTags[t] = &v1alpha1.MatchedTagStatus{
+					Tag: t,
+				}
+			}
 		}
 	}
 
-	tr.Status.MatchedTags = matchedTags
-
 	err = r.Status().Update(ctx, tr)
-	errcheck.Check(err)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
 
-	for _, t := range matchedTags {
+	for i := range tr.Status.MatchedTags {
+		if tr.Status.MatchedTags[i].Hash != "" {
+			continue
+		}
+
 		br := BuildReqest{
 			ctx: ctx,
 			obj: tr,
-			tag: t,
+			tag: tr.Status.MatchedTags[i].Tag,
 		}
-		br.Build()
+		tr.Status.MatchedTags[i].Hash = br.Build()
+
+		err = r.Status().Update(ctx, tr)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
 	}
+
+	fmt.Println("--- ending ---")
 
 	return ctrl.Result{}, nil
 }
@@ -85,7 +105,7 @@ type BuildReqest struct {
 	tag string
 }
 
-func (b *BuildReqest) Build() error {
+func (b *BuildReqest) Build() string {
 	_ = log.FromContext(b.ctx)
 
 	baseImage := fmt.Sprintf("%v:%v", b.obj.Spec.Repository, b.tag)
@@ -106,10 +126,10 @@ func (b *BuildReqest) Build() error {
 		cli.ExecContainer(buildContainer, action.Command.Args)
 	}
 
-	cli.CommitContainer(buildContainer, destImage)
+	hash := cli.CommitContainer(buildContainer, destImage)
 	cli.PushImage(destImage)
 
-	return nil
+	return hash
 }
 
 // SetupWithManager sets up the controller with the Manager.

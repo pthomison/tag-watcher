@@ -44,7 +44,12 @@ type CommandAction struct {
 
 // TagReflectorStatus defines the observed state of TagReflector
 type TagReflectorStatus struct {
-	MatchedTags []string `json:"matched-tags,omitempty"`
+	MatchedTags map[string]*MatchedTagStatus `json:"matched-tags,omitempty"`
+}
+
+type MatchedTagStatus struct {
+	Tag  string `json:"tag,omitempty"`
+	Hash string `json:"hash,omitempty"`
 }
 
 //+kubebuilder:object:root=true
