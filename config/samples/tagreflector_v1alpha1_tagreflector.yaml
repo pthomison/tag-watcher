@@ -1,0 +1,12 @@
+apiVersion: tagreflector.operator.pthomison.com/v1alpha1
+kind: TagReflector
+metadata:
+  labels:
+    app.kubernetes.io/name: tagreflector
+    app.kubernetes.io/instance: tagreflector-sample
+    app.kubernetes.io/part-of: tag-watcher
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: tag-watcher
+  name: tagreflector-sample
+spec:
+  # TODO(user): Add fields here

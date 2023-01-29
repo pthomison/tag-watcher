@@ -3,6 +3,7 @@ module github.com/pthomison/tag-watcher/hack
 go 1.19
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/docker v20.10.20+incompatible
 	github.com/google/go-containerregistry v0.13.0
 	github.com/pthomison/errcheck v0.0.3

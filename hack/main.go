@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
-	"github.com/google/go-containerregistry/pkg/name"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/pthomison/errcheck"
 )
@@ -28,70 +28,84 @@ const (
 
 func main() {
 	fmt.Println("Tag Watcher")
-	listContainers()
-
-	// spew.Dump(headImage(srcImage))
-	// spew.Dump(listRepository(srcRepository))
-	// spew.Dump(catalogRegistry(destRegistry))
-
+	r := NewRequest()
+	r.BuildImage()
 }
 
-func listContainers() {
+type Request struct {
+	client *client.Client
+	ctx    context.Context
+}
+
+func NewRequest() *Request {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		panic(err)
-	}
+	errcheck.Check(err)
 
-	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
-	if err != nil {
-		panic(err)
-	}
-
-	for _, container := range containers {
-		fmt.Printf("%s %s\n", container.ID[:10], container.Image)
+	return &Request{
+		client: cli,
+		ctx:    context.Background(),
 	}
 }
 
-func copyImage(src string, dest string) {
-	ref, err := name.ParseReference(src)
+func (r *Request) StartContainer() string {
+	id, err := r.client.ContainerCreate(r.ctx, &container.Config{
+		Image: "python:3",
+		Cmd: []string{
+			"python3",
+			"-m",
+			"http.server",
+			"8080",
+		},
+	}, &container.HostConfig{}, &network.NetworkingConfig{}, &v1.Platform{}, "testing")
 	errcheck.Check(err)
 
-	remoteRef, err := name.ParseReference(dest)
+	err = r.client.ContainerStart(r.ctx, id.ID, types.ContainerStartOptions{})
 	errcheck.Check(err)
 
-	image, err := remote.Image(ref)
-	errcheck.Check(err)
+	return id.ID
+}
 
-	err = remote.Write(remoteRef, image)
+func (r *Request) DeleteContainer(id string) {
+	err := r.client.ContainerRemove(r.ctx, id, types.ContainerRemoveOptions{
+		Force: true,
+	})
 	errcheck.Check(err)
 }
 
-func headImage(image string) *v1.Descriptor {
-	ref, err := name.ParseReference(image)
+func (r *Request) BuildImage() string {
+	createResp, err := r.client.ContainerCreate(r.ctx, &container.Config{
+		Image: "python:3",
+		Cmd: []string{
+			"python3",
+			"-m",
+			"http.server",
+			"8080",
+		},
+	}, &container.HostConfig{}, &network.NetworkingConfig{}, &v1.Platform{}, "testing")
 	errcheck.Check(err)
 
-	desc, err := remote.Head(ref)
+	id := createResp.ID
+
+	err = r.client.ContainerStart(r.ctx, id, types.ContainerStartOptions{})
 	errcheck.Check(err)
 
-	return desc
-}
+	defer r.DeleteContainer(id)
 
-func listRepository(repoStr string) []string {
-	repo, err := name.NewRepository(repoStr)
+	exec, err := r.client.ContainerExecCreate(r.ctx, id, types.ExecConfig{
+		Cmd: []string{
+			"touch",
+			"/iwashere",
+		},
+	})
 	errcheck.Check(err)
 
-	tags, err := remote.List(repo)
+	err = r.client.ContainerExecStart(r.ctx, exec.ID, types.ExecStartCheck{})
 	errcheck.Check(err)
 
-	return tags
-}
-
-func catalogRegistry(registryStr string) []string {
-	registry, err := name.NewRegistry(registryStr)
+	resp, err := r.client.ContainerCommit(r.ctx, id, types.ContainerCommitOptions{
+		Reference: "test-image:latest",
+	})
 	errcheck.Check(err)
 
-	images, err := remote.Catalog(context.Background(), registry)
-	errcheck.Check(err)
-
-	return images
+	return resp.ID
 }

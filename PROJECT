@@ -1,0 +1,16 @@
+domain: operator.pthomison.com
+layout:
+- go.kubebuilder.io/v4-alpha
+projectName: tag-watcher
+repo: github.com/pthomison/tag-watcher
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: operator.pthomison.com
+  group: tagreflector
+  kind: TagReflector
+  path: github.com/pthomison/tag-watcher/api/v1alpha1
+  version: v1alpha1
+version: "3"

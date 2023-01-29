@@ -1,0 +1,31 @@
+# permissions for end users to edit tagreflectors.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: tagreflector-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: tag-watcher
+    app.kubernetes.io/part-of: tag-watcher
+    app.kubernetes.io/managed-by: kustomize
+  name: tagreflector-editor-role
+rules:
+- apiGroups:
+  - tagreflector.operator.pthomison.com
+  resources:
+  - tagreflectors
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - tagreflector.operator.pthomison.com
+  resources:
+  - tagreflectors/status
+  verbs:
+  - get
