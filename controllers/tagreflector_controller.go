@@ -26,10 +26,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/pthomison/errcheck"
 	"github.com/pthomison/tag-watcher/api/v1alpha1"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
-	"github.com/pthomison/tag-watcher/pkg/registry"
+	"github.com/pthomison/tag-watcher/pkg/containerutils"
+	"github.com/pthomison/tag-watcher/pkg/registryutils"
 )
 
 // TagReflectorReconciler reconciles a TagReflector object
@@ -42,15 +44,6 @@ type TagReflectorReconciler struct {
 //+kubebuilder:rbac:groups=tagreflector.operator.pthomison.com,resources=tagreflectors/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=tagreflector.operator.pthomison.com,resources=tagreflectors/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the TagReflector object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
@@ -59,28 +52,58 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	errcheck.Check(err)
 
 	re := regexp.MustCompile(tr.Spec.Regex)
-	tags := registry.ListRepository(tr.Spec.Registry)
-
-	// s := strings.Join(tags, " ")
+	tags := registryutils.ListRepository(tr.Spec.Repository)
 
 	for _, t := range tags {
 		if re.FindString(t) == t {
 			fmt.Println(t)
+			br := BuildReqest{
+				ctx: ctx,
+				obj: tr,
+				// repo:    tr.Spec.Registry,
+				tag: t,
+				// command: tr.Spec.Commands,
+			}
+			br.Build()
 		}
 	}
 
-	// fmt.Println(re.String())
-	// fmt.Println(s)
-
-	// matchedtags := re.FindAll([]byte(s), -1)
-
-	// // fmt.Println(matchedtags)
-
-	// for _, v := range matchedtags {
-	// 	fmt.Println(string(v))
-	// }
-
 	return ctrl.Result{}, nil
+}
+
+type BuildReqest struct {
+	ctx context.Context
+	obj *v1alpha1.TagReflector
+
+	// repo    string
+	tag string
+	// command []string
+}
+
+func (b *BuildReqest) Build() error {
+	_ = log.FromContext(b.ctx)
+
+	dockerReq := containerutils.NewRequest()
+
+	buildContainer := dockerReq.StartContainer(&container.Config{
+		Image: fmt.Sprintf("%v:%v", b.obj.Spec.Repository, b.tag),
+		Cmd: []string{
+			"python3",
+			"-m",
+			"http.server",
+			"8080",
+		},
+	})
+
+	defer dockerReq.DeleteContainer(buildContainer)
+
+	dockerReq.ExecContainer(buildContainer, b.obj.Spec.Commands)
+
+	dest := fmt.Sprintf("%v:%v-%v", b.obj.Spec.DestinationRegistry, b.tag, b.obj.Spec.ReflectorSuffix)
+
+	dockerReq.CommitContainer(buildContainer, dest)
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

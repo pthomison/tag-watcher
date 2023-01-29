@@ -1,4 +1,4 @@
-package registry
+package registryutils
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/pthomison/errcheck"
 )
 
-func copyImage(src string, dest string) {
+func CopyImage(src string, dest string) {
 	ref, err := name.ParseReference(src)
 	errcheck.Check(err)
 

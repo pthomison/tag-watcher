@@ -35,9 +35,17 @@ spec:
           spec:
             description: TagReflectorSpec defines the desired state of TagReflector
             properties:
+              commands:
+                items:
+                  type: string
+                type: array
+              destination:
+                type: string
               regex:
                 type: string
-              registry:
+              repository:
+                type: string
+              suffix:
                 type: string
             type: object
           status:

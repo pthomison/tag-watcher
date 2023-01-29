@@ -9,5 +9,10 @@ metadata:
     app.kubernetes.io/created-by: tag-watcher
   name: tagreflector-sample
 spec:
-  registry: docker.io/library/python
+  repository: docker.io/library/python
+  destination: 127.0.0.1:15555/python
+  suffix: "testing"
   regex: "3.9(.)*"
+  commands:
+  - echo
+  - "hello world"

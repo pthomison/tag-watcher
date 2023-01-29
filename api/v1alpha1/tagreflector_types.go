@@ -25,8 +25,11 @@ import (
 
 // TagReflectorSpec defines the desired state of TagReflector
 type TagReflectorSpec struct {
-	Registry string `json:"registry,omitempty"`
-	Regex    string `json:"regex,omitempty"`
+	Repository          string   `json:"repository,omitempty"`
+	Regex               string   `json:"regex,omitempty"`
+	Commands            []string `json:"commands,omitempty"`
+	DestinationRegistry string   `json:"destination,omitempty"`
+	ReflectorSuffix     string   `json:"suffix,omitempty"`
 }
 
 // TagReflectorStatus defines the observed state of TagReflector
