@@ -18,13 +18,18 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/pthomison/errcheck"
+	"github.com/pthomison/tag-watcher/api/v1alpha1"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
+	"github.com/pthomison/tag-watcher/pkg/registry"
 )
 
 // TagReflectorReconciler reconciles a TagReflector object
@@ -49,7 +54,31 @@ type TagReflectorReconciler struct {
 func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	tr := &v1alpha1.TagReflector{}
+	err := r.Client.Get(ctx, req.NamespacedName, tr)
+	errcheck.Check(err)
+
+	re := regexp.MustCompile(tr.Spec.Regex)
+	tags := registry.ListRepository(tr.Spec.Registry)
+
+	// s := strings.Join(tags, " ")
+
+	for _, t := range tags {
+		if re.FindString(t) == t {
+			fmt.Println(t)
+		}
+	}
+
+	// fmt.Println(re.String())
+	// fmt.Println(s)
+
+	// matchedtags := re.FindAll([]byte(s), -1)
+
+	// // fmt.Println(matchedtags)
+
+	// for _, v := range matchedtags {
+	// 	fmt.Println(string(v))
+	// }
 
 	return ctrl.Result{}, nil
 }

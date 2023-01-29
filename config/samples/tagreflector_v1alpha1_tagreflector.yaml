@@ -9,4 +9,5 @@ metadata:
     app.kubernetes.io/created-by: tag-watcher
   name: tagreflector-sample
 spec:
-  # TODO(user): Add fields here
+  registry: docker.io/library/python
+  regex: "3.9(.)*"
