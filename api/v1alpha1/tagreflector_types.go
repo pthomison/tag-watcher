@@ -22,16 +22,24 @@ import (
 
 // TagReflectorSpec defines the desired state of TagReflector
 type TagReflectorSpec struct {
-	Repository          string   `json:"repository,omitempty"`
-	Regex               TagRegex `json:"regex,omitempty"`
-	Commands            []string `json:"commands,omitempty"`
-	DestinationRegistry string   `json:"destination,omitempty"`
-	ReflectorSuffix     string   `json:"suffix,omitempty"`
+	Repository          string      `json:"repository,omitempty"`
+	Regex               TagRegex    `json:"regex,omitempty"`
+	Actions             []TagAction `json:"actions,omitempty"`
+	DestinationRegistry string      `json:"destination,omitempty"`
+	ReflectorSuffix     string      `json:"suffix,omitempty"`
 }
 
 type TagRegex struct {
 	Match  string `json:"match,omitempty"`
 	Ignore string `json:"ignore,omitempty"`
+}
+
+type TagAction struct {
+	Command *CommandAction `json:"command,omitempty"`
+}
+
+type CommandAction struct {
+	Args []string `json:"args,omitempty"`
 }
 
 // TagReflectorStatus defines the observed state of TagReflector

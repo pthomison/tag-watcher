@@ -56,26 +56,16 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	tags := registryutils.ListRepository(tr.Spec.Repository)
 
 	var matchedTags []string
-
 	for _, t := range tags {
-		// if ! re.MatchString()
 		if !ignore.MatchString(t) && match.FindString(t) == t {
-			// fmt.Println(t)
 			matchedTags = append(matchedTags, t)
 		}
 	}
 
 	tr.Status.MatchedTags = matchedTags
 
-	fmt.Println(tr)
-
 	err = r.Status().Update(ctx, tr)
 	errcheck.Check(err)
-
-	// os.Exit(1)
-
-	// err = r.Client.Update(ctx, tr)
-	// errcheck.Check(err)
 
 	for _, t := range matchedTags {
 		br := BuildReqest{
@@ -85,8 +75,6 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 		br.Build()
 	}
-
-	// MatchedTags
 
 	return ctrl.Result{}, nil
 }
@@ -114,7 +102,10 @@ func (b *BuildReqest) Build() error {
 	})
 	defer cli.DeleteContainer(buildContainer)
 
-	cli.ExecContainer(buildContainer, b.obj.Spec.Commands)
+	for _, action := range b.obj.Spec.Actions {
+		cli.ExecContainer(buildContainer, action.Command.Args)
+	}
+
 	cli.CommitContainer(buildContainer, destImage)
 	cli.PushImage(destImage)
 
