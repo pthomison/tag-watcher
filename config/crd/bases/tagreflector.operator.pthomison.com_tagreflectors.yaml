@@ -42,7 +42,12 @@ spec:
               destination:
                 type: string
               regex:
-                type: string
+                properties:
+                  ignore:
+                    type: string
+                  match:
+                    type: string
+                type: object
               repository:
                 type: string
               suffix:
@@ -50,6 +55,11 @@ spec:
             type: object
           status:
             description: TagReflectorStatus defines the observed state of TagReflector
+            properties:
+              matched-tags:
+                items:
+                  type: string
+                type: array
             type: object
         type: object
     served: true

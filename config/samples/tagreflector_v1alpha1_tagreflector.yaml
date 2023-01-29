@@ -12,7 +12,9 @@ spec:
   repository: docker.io/library/python
   destination: 127.0.0.1:15555/python
   suffix: "testing"
-  regex: "3.9(.)*"
+  regex: 
+    match: "3.9(.*)-alpine(.*)"
+    ignore: "windows"
   commands:
   - echo
   - "hello world"

@@ -23,7 +23,7 @@ func CopyImage(src string, dest string) {
 	errcheck.Check(err)
 }
 
-func headImage(image string) *v1.Descriptor {
+func HeadImage(image string) *v1.Descriptor {
 	ref, err := name.ParseReference(image)
 	errcheck.Check(err)
 
@@ -36,6 +36,11 @@ func headImage(image string) *v1.Descriptor {
 func ListRepository(repoStr string) []string {
 	repo, err := name.NewRepository(repoStr)
 	errcheck.Check(err)
+
+	// TODO: Figure out a clean platform parsing strategy/why the below doesn't work
+	// platform, err := v1.ParsePlatform("linux/arm64")
+	// errcheck.Check(err)
+	// tags, err := remote.List(repo, remote.WithPlatform(*platform))
 
 	tags, err := remote.List(repo)
 	errcheck.Check(err)

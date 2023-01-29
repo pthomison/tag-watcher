@@ -23,15 +23,20 @@ import (
 // TagReflectorSpec defines the desired state of TagReflector
 type TagReflectorSpec struct {
 	Repository          string   `json:"repository,omitempty"`
-	Regex               string   `json:"regex,omitempty"`
+	Regex               TagRegex `json:"regex,omitempty"`
 	Commands            []string `json:"commands,omitempty"`
 	DestinationRegistry string   `json:"destination,omitempty"`
 	ReflectorSuffix     string   `json:"suffix,omitempty"`
 }
 
+type TagRegex struct {
+	Match  string `json:"match,omitempty"`
+	Ignore string `json:"ignore,omitempty"`
+}
+
 // TagReflectorStatus defines the observed state of TagReflector
 type TagReflectorStatus struct {
-	SourceHash string `json:"source-hash,omitempty"`
+	MatchedTags []string `json:"matched-tags,omitempty"`
 }
 
 //+kubebuilder:object:root=true

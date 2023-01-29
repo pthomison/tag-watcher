@@ -51,20 +51,42 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	err := r.Client.Get(ctx, req.NamespacedName, tr)
 	errcheck.Check(err)
 
-	re := regexp.MustCompile(tr.Spec.Regex)
+	match := regexp.MustCompile(tr.Spec.Regex.Match)
+	ignore := regexp.MustCompile(tr.Spec.Regex.Ignore)
 	tags := registryutils.ListRepository(tr.Spec.Repository)
 
+	var matchedTags []string
+
 	for _, t := range tags {
-		if re.FindString(t) == t {
-			fmt.Println(t)
-			br := BuildReqest{
-				ctx: ctx,
-				obj: tr,
-				tag: t,
-			}
-			br.Build()
+		// if ! re.MatchString()
+		if !ignore.MatchString(t) && match.FindString(t) == t {
+			// fmt.Println(t)
+			matchedTags = append(matchedTags, t)
 		}
 	}
+
+	tr.Status.MatchedTags = matchedTags
+
+	fmt.Println(tr)
+
+	err = r.Status().Update(ctx, tr)
+	errcheck.Check(err)
+
+	// os.Exit(1)
+
+	// err = r.Client.Update(ctx, tr)
+	// errcheck.Check(err)
+
+	for _, t := range matchedTags {
+		br := BuildReqest{
+			ctx: ctx,
+			obj: tr,
+			tag: t,
+		}
+		br.Build()
+	}
+
+	// MatchedTags
 
 	return ctrl.Result{}, nil
 }
@@ -78,11 +100,12 @@ type BuildReqest struct {
 func (b *BuildReqest) Build() error {
 	_ = log.FromContext(b.ctx)
 
-	cli := containerutils.NewRequest()
-
 	baseImage := fmt.Sprintf("%v:%v", b.obj.Spec.Repository, b.tag)
 	destImage := fmt.Sprintf("%v:%v-%v", b.obj.Spec.DestinationRegistry, b.tag, b.obj.Spec.ReflectorSuffix)
 
+	fmt.Printf("Building %v\n", destImage)
+
+	cli := containerutils.NewRequest()
 	cli.PullImage(baseImage)
 
 	buildContainer := cli.StartContainer(&container.Config{

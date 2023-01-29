@@ -23,8 +23,16 @@ func main() {
 	fmt.Println("Tag Watcher - Testing")
 	// r := containerutils.NewRequest()
 
-	registry := destRegistry
+	// ScanRegistry(destRegistry)
 
+	// platform, err := v1.ParsePlatform("linux/arm64")
+	// errcheck.Check(err)
+
+	fmt.Printf("%+v\n", registryutils.ListRepository(srcRepository))
+
+}
+
+func ScanRegistry(registry string) {
 	imgs := registryutils.CatalogRegistry(registry)
 
 	for _, img := range imgs {
@@ -35,7 +43,6 @@ func main() {
 		}
 
 	}
-
 }
 
 // type Request struct {
