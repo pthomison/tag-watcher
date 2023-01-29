@@ -25,11 +25,8 @@ import (
 
 // TagReflectorSpec defines the desired state of TagReflector
 type TagReflectorSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of TagReflector. Edit tagreflector_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Registry string `json:"registry,omitempty"`
+	Regex    string `json:"regex,omitempty"`
 }
 
 // TagReflectorStatus defines the observed state of TagReflector
