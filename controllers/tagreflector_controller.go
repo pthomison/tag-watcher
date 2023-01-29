@@ -60,9 +60,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			br := BuildReqest{
 				ctx: ctx,
 				obj: tr,
-				// repo:    tr.Spec.Registry,
 				tag: t,
-				// command: tr.Spec.Commands,
 			}
 			br.Build()
 		}
@@ -74,34 +72,28 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 type BuildReqest struct {
 	ctx context.Context
 	obj *v1alpha1.TagReflector
-
-	// repo    string
 	tag string
-	// command []string
 }
 
 func (b *BuildReqest) Build() error {
 	_ = log.FromContext(b.ctx)
 
-	dockerReq := containerutils.NewRequest()
+	cli := containerutils.NewRequest()
 
-	buildContainer := dockerReq.StartContainer(&container.Config{
-		Image: fmt.Sprintf("%v:%v", b.obj.Spec.Repository, b.tag),
-		Cmd: []string{
-			"python3",
-			"-m",
-			"http.server",
-			"8080",
-		},
+	baseImage := fmt.Sprintf("%v:%v", b.obj.Spec.Repository, b.tag)
+	destImage := fmt.Sprintf("%v:%v-%v", b.obj.Spec.DestinationRegistry, b.tag, b.obj.Spec.ReflectorSuffix)
+
+	cli.PullImage(baseImage)
+
+	buildContainer := cli.StartContainer(&container.Config{
+		Image: baseImage,
+		Cmd:   []string{"sleep", "9999"},
 	})
+	defer cli.DeleteContainer(buildContainer)
 
-	defer dockerReq.DeleteContainer(buildContainer)
-
-	dockerReq.ExecContainer(buildContainer, b.obj.Spec.Commands)
-
-	dest := fmt.Sprintf("%v:%v-%v", b.obj.Spec.DestinationRegistry, b.tag, b.obj.Spec.ReflectorSuffix)
-
-	dockerReq.CommitContainer(buildContainer, dest)
+	cli.ExecContainer(buildContainer, b.obj.Spec.Commands)
+	cli.CommitContainer(buildContainer, destImage)
+	cli.PushImage(destImage)
 
 	return nil
 }

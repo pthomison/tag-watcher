@@ -2,6 +2,8 @@ package containerutils
 
 import (
 	"context"
+	"fmt"
+	"io/ioutil"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -10,6 +12,7 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/pthomison/errcheck"
+	"github.com/pthomison/tag-watcher/pkg/utils"
 )
 
 type Request struct {
@@ -27,14 +30,22 @@ func NewRequest() *Request {
 	}
 }
 
-func (r *Request) StartContainer(c *container.Config) string {
-	id, err := r.client.ContainerCreate(r.ctx, c, &container.HostConfig{}, &network.NetworkingConfig{}, &v1.Platform{}, "testing")
-	errcheck.Check(err)
+func (r *Request) CreateContainer(c *container.Config) string {
+	containerName := fmt.Sprintf("%v-%v", "testing", utils.RandomString(10))
 
-	err = r.client.ContainerStart(r.ctx, id.ID, types.ContainerStartOptions{})
+	id, err := r.client.ContainerCreate(r.ctx, c, &container.HostConfig{}, &network.NetworkingConfig{}, &v1.Platform{}, containerName)
 	errcheck.Check(err)
 
 	return id.ID
+}
+
+func (r *Request) StartContainer(c *container.Config) string {
+	containerID := r.CreateContainer(c)
+
+	err := r.client.ContainerStart(r.ctx, containerID, types.ContainerStartOptions{})
+	errcheck.Check(err)
+
+	return containerID
 }
 
 func (r *Request) DeleteContainer(id string) {
@@ -63,40 +74,18 @@ func (r *Request) CommitContainer(id string, ref string) string {
 	return resp.ID
 }
 
-func (r *Request) BuildImage() string {
-	createResp, err := r.client.ContainerCreate(r.ctx, &container.Config{
-		Image: "python:3",
-		Cmd: []string{
-			"python3",
-			"-m",
-			"http.server",
-			"8080",
-		},
-	}, &container.HostConfig{}, &network.NetworkingConfig{}, &v1.Platform{}, "testing")
+func (r *Request) PullImage(image string) {
+	body, err := r.client.ImagePull(r.ctx, image, types.ImagePullOptions{})
 	errcheck.Check(err)
+	ioutil.ReadAll(body)
+	body.Close()
+}
 
-	id := createResp.ID
-
-	err = r.client.ContainerStart(r.ctx, id, types.ContainerStartOptions{})
-	errcheck.Check(err)
-
-	defer r.DeleteContainer(id)
-
-	exec, err := r.client.ContainerExecCreate(r.ctx, id, types.ExecConfig{
-		Cmd: []string{
-			"touch",
-			"/iwashere",
-		},
+func (r *Request) PushImage(image string) {
+	body, err := r.client.ImagePush(r.ctx, image, types.ImagePushOptions{
+		RegistryAuth: "123",
 	})
 	errcheck.Check(err)
-
-	err = r.client.ContainerExecStart(r.ctx, exec.ID, types.ExecStartCheck{})
-	errcheck.Check(err)
-
-	resp, err := r.client.ContainerCommit(r.ctx, id, types.ContainerCommitOptions{
-		Reference: "test-image:latest",
-	})
-	errcheck.Check(err)
-
-	return resp.ID
+	ioutil.ReadAll(body)
+	body.Close()
 }
