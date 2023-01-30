@@ -22,12 +22,11 @@ import (
 	"regexp"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/docker/docker/api/types/container"
-	"github.com/pthomison/errcheck"
 	"github.com/pthomison/tag-watcher/api/v1alpha1"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
 	"github.com/pthomison/tag-watcher/pkg/containerutils"
@@ -47,89 +46,71 @@ type TagReflectorReconciler struct {
 func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	fmt.Println("--- starting ---")
+	fmt.Println("--- Start Of Reconcile Loop ---")
 
-	tr := &v1alpha1.TagReflector{}
-	err := r.Client.Get(ctx, req.NamespacedName, tr)
-	errcheck.Check(err)
+	// Reqest TagReflector Object
+	tr, err := r.Get(ctx, req.NamespacedName)
+	if tr == nil {
+		return ctrl.Result{}, err
+	}
 
+	// Setup Regexes To Test Tags Later On
+	// TODO: Don't crash if regex doesn't compile; Report error and skip processing
 	match := regexp.MustCompile(tr.Spec.Regex.Match)
 	ignore := regexp.MustCompile(tr.Spec.Regex.Ignore)
+
+	// Find All Tags Associated With The Spec Repository
 	tags := registryutils.ListRepository(tr.Spec.Repository)
 
+	// Create The Status Map If Needed
 	if tr.Status.MatchedTags == nil {
 		tr.Status.MatchedTags = make(map[string]*tagreflectorv1alpha1.MatchedTagStatus)
 	}
 
+	// Filter Tags Down Via Spec Regex
+	regexFunc := func(tag string) bool {
+		return !ignore.MatchString(tag) && match.FindString(tag) == tag
+	}
+	// Add a MatchedTagStatus object for desired tags
 	for _, t := range tags {
-		if !ignore.MatchString(t) && match.FindString(t) == t {
-			if tr.Status.MatchedTags[t] == nil {
-				tr.Status.MatchedTags[t] = &v1alpha1.MatchedTagStatus{
-					Tag: t,
-				}
+		if regexFunc(t) && tr.Status.MatchedTags[t] == nil {
+			tr.Status.MatchedTags[t] = &v1alpha1.MatchedTagStatus{
+				Tag: t,
 			}
 		}
 	}
 
-	err = r.Status().Update(ctx, tr)
+	// Write Tags w/o Hash Data
+	err = r.StatusUpdate(ctx, tr)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	for i := range tr.Status.MatchedTags {
+		// Assume That If Hash Is Populated, The Image Has Been Copied
+		// TODO: Better hash knowledge/Compare hashes to registry to see if things have changed
 		if tr.Status.MatchedTags[i].Hash != "" {
 			continue
 		}
 
-		br := BuildReqest{
-			ctx: ctx,
-			obj: tr,
-			tag: tr.Status.MatchedTags[i].Tag,
+		// Create a build request && execute it
+		br := containerutils.BuildReqest{
+			CTX: ctx,
+			Obj: tr,
+			Tag: tr.Status.MatchedTags[i].Tag,
 		}
 		tr.Status.MatchedTags[i].Hash = br.Build()
 
-		err = r.Status().Update(ctx, tr)
+		// Update the status with the image hash
+		err = r.StatusUpdate(ctx, tr)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 	}
 
-	fmt.Println("--- ending ---")
+	fmt.Println("--- End Of Reconcile Loop ---")
 
 	return ctrl.Result{}, nil
-}
-
-type BuildReqest struct {
-	ctx context.Context
-	obj *v1alpha1.TagReflector
-	tag string
-}
-
-func (b *BuildReqest) Build() string {
-	_ = log.FromContext(b.ctx)
-
-	baseImage := fmt.Sprintf("%v:%v", b.obj.Spec.Repository, b.tag)
-	destImage := fmt.Sprintf("%v:%v-%v", b.obj.Spec.DestinationRegistry, b.tag, b.obj.Spec.ReflectorSuffix)
-
-	fmt.Printf("Building %v\n", destImage)
-
-	cli := containerutils.NewRequest()
-	cli.PullImage(baseImage)
-
-	buildContainer := cli.StartContainer(&container.Config{
-		Image: baseImage,
-		Cmd:   []string{"sleep", "9999"},
-	})
-	defer cli.DeleteContainer(buildContainer)
-
-	for _, action := range b.obj.Spec.Actions {
-		cli.ExecContainer(buildContainer, action.Command.Args)
-	}
-
-	hash := cli.CommitContainer(buildContainer, destImage)
-	cli.PushImage(destImage)
-
-	return hash
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -137,4 +118,17 @@ func (r *TagReflectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&tagreflectorv1alpha1.TagReflector{}).
 		Complete(r)
+}
+
+// Utility Wrapper Functions
+
+func (r *TagReflectorReconciler) Get(ctx context.Context, name types.NamespacedName) (*v1alpha1.TagReflector, error) {
+	tr := &v1alpha1.TagReflector{}
+	err := r.Client.Get(ctx, name, tr)
+	return tr, err
+}
+
+func (r *TagReflectorReconciler) StatusUpdate(ctx context.Context, tr *v1alpha1.TagReflector) error {
+	err := r.Status().Update(ctx, tr)
+	return err
 }
