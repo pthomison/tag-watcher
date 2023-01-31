@@ -1,8 +1,8 @@
 TAG ?= $(shell git rev-parse --short HEAD)
 # Image URL to use all building/pushing image targets
-IMG ?= 127.0.0.1:15555/tag-watcher-controller:$(TAG)
+IMG ?= 127.0.0.1:15000/tag-watcher-controller:$(TAG)
 # Image URL to use for deployment
-DEPLOY_IMG ?= 127.0.0.1:15555/tag-watcher-controller:$(TAG)
+DEPLOY_IMG ?= registry.localhost:15000/tag-watcher-controller:$(TAG)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.25.0
 
@@ -115,7 +115,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${DEPLOY_IMG}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
 
 .PHONY: undeploy
