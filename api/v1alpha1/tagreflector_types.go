@@ -48,8 +48,8 @@ type TagReflectorStatus struct {
 }
 
 type MatchedTagStatus struct {
-	Tag  string `json:"tag,omitempty"`
-	Hash string `json:"hash,omitempty"`
+	Tag          string `json:"tag,omitempty"`
+	SourceDigest string `json:"source-digest,omitempty"`
 }
 
 //+kubebuilder:object:root=true

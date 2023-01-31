@@ -28,11 +28,18 @@ func main() {
 	// platform, err := v1.ParsePlatform("linux/arm64")
 	// errcheck.Check(err)
 
-	// fmt.Printf("%+v\n", registryutils.ListRepository(srcRepository))
 	// registryutils.CopyImage(srcImage, destImage)
-	// fmt.Printf("%+v\n", registryutils.HeadImage(srcImage))
-	// fmt.Printf("%+v\n", registryutils.HeadImage(destImage))
-	fmt.Printf("%+v\n", registryutils.Get("sha256:7efc1ae7e6e9c5263d87845cb00f6ab7f6b27670cae29c9d93fa7910d6ab12c0"))
+
+	// // srcHead := registryutils.HeadImage(srcImage)
+	// // spew.Dump(srcHead)
+
+	// dstHead := registryutils.HeadImage(destImage)
+	// spew.Dump(dstHead)
+	// spew.Dump(dstHead)
+
+	// fmt.Printf("%+v\n", registryutils.ListRepository(srcRepository))
+	// fmt.Printf("%+v\n", registryutils.Get("sha256:7efc1ae7e6e9c5263d87845cb00f6ab7f6b27670cae29c9d93fa7910d6ab12c0"))
+	registryutils.Hack()
 
 }
 
@@ -40,7 +47,7 @@ func ScanRegistry(registry string) {
 	imgs := registryutils.CatalogRegistry(registry)
 
 	for _, img := range imgs {
-		repo := fmt.Sprintf("%v/%v", destRegistry, img)
+		repo := fmt.Sprintf("%v/%v", registry, img)
 		tags := registryutils.ListRepository(repo)
 		for _, tag := range tags {
 			fmt.Printf("%v:%v\n", repo, tag)

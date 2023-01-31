@@ -46,12 +46,13 @@ type TagReflectorReconciler struct {
 func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	fmt.Println("--- Start Of Reconcile Loop ---")
-
 	// Reqest TagReflector Object
 	tr, err := r.Get(ctx, req.NamespacedName)
-	if tr == nil {
+
+	if client.IgnoreNotFound(err) != nil {
 		return ctrl.Result{}, err
+	} else if err != nil {
+		return ctrl.Result{}, nil
 	}
 
 	// Setup Regexes To Test Tags Later On
@@ -87,9 +88,11 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	for i := range tr.Status.MatchedTags {
-		// Assume That If Hash Is Populated, The Image Has Been Copied
-		// TODO: Better hash knowledge/Compare hashes to registry to see if things have changed
-		if tr.Status.MatchedTags[i].Hash != "" {
+		sourceImage := fmt.Sprintf("%v:%v", tr.Spec.Repository, tr.Status.MatchedTags[i].Tag)
+		sourceHash := registryutils.GetImageDigest(sourceImage)
+
+		if tr.Status.MatchedTags[i].SourceDigest == sourceHash {
+			fmt.Printf("Source Digest Matches; Skipping %v\n", sourceImage)
 			continue
 		}
 
@@ -99,7 +102,9 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			Obj: tr,
 			Tag: tr.Status.MatchedTags[i].Tag,
 		}
-		tr.Status.MatchedTags[i].Hash = br.Build()
+		br.Build()
+
+		tr.Status.MatchedTags[i].SourceDigest = sourceHash
 
 		// Update the status with the image hash
 		err = r.StatusUpdate(ctx, tr)
@@ -107,8 +112,6 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 	}
-
-	fmt.Println("--- End Of Reconcile Loop ---")
 
 	return ctrl.Result{}, nil
 }

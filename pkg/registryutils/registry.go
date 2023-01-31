@@ -2,13 +2,50 @@ package registryutils
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pthomison/errcheck"
 )
+
+func Hack() {
+
+	remoteImage := "index.docker.io/library/python:3"
+	destImage := "127.0.0.1:15555/python:3"
+	// remoteManifest := "index.docker.io/library/python@sha256:7efc1ae7e6e9c5263d87845cb00f6ab7f6b27670cae29c9d93fa7910d6ab12c0"
+
+	CopyImage(remoteImage, destImage)
+
+	spew.Dump(GetImageDigest(remoteImage))
+	spew.Dump(GetImageDigest(destImage))
+
+}
+
+func GetManifest(imageRef string) *v1.Manifest {
+	image := GetImage(imageRef)
+
+	manifest, err := image.Manifest()
+	errcheck.Check(err)
+
+	return manifest
+}
+
+func GetImageDigest(imageReg string) string {
+	digest, err := GetImage(imageReg).Digest()
+	errcheck.Check(err)
+	return digest.String()
+}
+
+func GetImage(imageRef string) v1.Image {
+	descriptor := Get(imageRef)
+
+	image, err := descriptor.Image()
+	errcheck.Check(err)
+
+	return image
+}
 
 func CopyImage(src string, dest string) {
 	ref, err := name.ParseReference(src)
@@ -30,11 +67,6 @@ func HeadImage(image string) *v1.Descriptor {
 
 	desc, err := remote.Head(ref)
 	errcheck.Check(err)
-
-	d, err := remote.Get(ref)
-	errcheck.Check(err)
-
-	fmt.Printf("%+v\n", string(d.Manifest))
 
 	return desc
 }

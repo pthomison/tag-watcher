@@ -67,7 +67,7 @@ spec:
               matched-tags:
                 additionalProperties:
                   properties:
-                    hash:
+                    source-digest:
                       type: string
                     tag:
                       type: string
