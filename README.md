@@ -10,6 +10,7 @@ Big TODOs
 - Need a way to hit a docker socket inside the cluster, hoping to use DIND container, but need to do some research/testing
 - Tests.... test test test
 - Way to invoke the logic outside of the controller; ie some kind of CLI
+- Report errors with the push to second registry
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.

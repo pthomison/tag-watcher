@@ -57,7 +57,7 @@ spec:
       #             values:
       #               - linux
       securityContext:
-        runAsNonRoot: true
+        runAsNonRoot: false
         # TODO(user): For common cases that do not require escalating privileges
         # it is recommended to ensure that all your Pods/Containers are restrictive.
         # More info: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
@@ -66,12 +66,33 @@ spec:
         # seccompProfile:
         #   type: RuntimeDefault
       containers:
+      - name: dind-daemon 
+        image: docker:dind
+        command:
+        - docker-entrypoint.sh
+        - dockerd
+        - --host
+        - tcp://127.0.0.1:2375
+        env: 
+          - name: DOCKER_HOST 
+            value: tcp://localhost:2375 
+          - name: DOCKER_TLS_CERTDIR
+            value: /certs
+        securityContext: 
+            privileged: true 
+        volumeMounts: 
+          - name: docker-graph-storage 
+            mountPath: /var/lib/docker
+
       - command:
         - /manager
         args:
         - --leader-elect
         image: controller:latest
         name: manager
+        env: 
+          - name: DOCKER_HOST 
+            value: tcp://localhost:2375 
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -100,3 +121,6 @@ spec:
             memory: 64Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
+      volumes: 
+        - name: docker-graph-storage 
+          emptyDir: {}

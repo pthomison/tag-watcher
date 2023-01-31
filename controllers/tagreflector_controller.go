@@ -91,8 +91,18 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		sourceImage := fmt.Sprintf("%v:%v", tr.Spec.Repository, tr.Status.MatchedTags[i].Tag)
 		sourceHash := registryutils.GetImageDigest(sourceImage)
 
-		if tr.Status.MatchedTags[i].SourceDigest == sourceHash {
-			fmt.Printf("Source Digest Matches; Skipping %v\n", sourceImage)
+		destinationImage := fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
+		destinationHash := registryutils.GetImageDigest(destinationImage)
+
+		imageDone := func() bool {
+			return sourceHash != "" &&
+				destinationHash != "" &&
+				tr.Status.MatchedTags[i].SourceDigest == sourceHash &&
+				tr.Status.MatchedTags[i].DestinationDigest == destinationHash
+		}
+
+		if imageDone() {
+			fmt.Printf("Source && Destination Digests Matches; Skipping %v\n", sourceImage)
 			continue
 		}
 
@@ -105,6 +115,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		br.Build()
 
 		tr.Status.MatchedTags[i].SourceDigest = sourceHash
+		tr.Status.MatchedTags[i].DestinationDigest = registryutils.GetImageDigest(destinationImage)
 
 		// Update the status with the image hash
 		err = r.StatusUpdate(ctx, tr)

@@ -25,6 +25,9 @@ func Hack() {
 
 func GetManifest(imageRef string) *v1.Manifest {
 	image := GetImage(imageRef)
+	if image == nil {
+		return nil
+	}
 
 	manifest, err := image.Manifest()
 	errcheck.Check(err)
@@ -33,13 +36,20 @@ func GetManifest(imageRef string) *v1.Manifest {
 }
 
 func GetImageDigest(imageReg string) string {
-	digest, err := GetImage(imageReg).Digest()
+	image := GetImage(imageReg)
+	if image == nil {
+		return ""
+	}
+	digest, err := image.Digest()
 	errcheck.Check(err)
 	return digest.String()
 }
 
 func GetImage(imageRef string) v1.Image {
 	descriptor := Get(imageRef)
+	if descriptor == nil {
+		return nil
+	}
 
 	image, err := descriptor.Image()
 	errcheck.Check(err)
@@ -76,7 +86,9 @@ func Get(s string) *remote.Descriptor {
 	errcheck.Check(err)
 
 	d, err := remote.Get(ref)
-	errcheck.Check(err)
+	if err != nil {
+		return nil
+	}
 
 	return d
 }

@@ -10,7 +10,8 @@ metadata:
   name: tagreflector-sample
 spec:
   repository: docker.io/library/python
-  destination: 127.0.0.1:15555/python
+  destination: 127.0.0.1:15000/python
+  # destination: registry.localhost:15000/python
   suffix: "testing"
   regex: 
     match: "3.9.16-alpine(.*)"

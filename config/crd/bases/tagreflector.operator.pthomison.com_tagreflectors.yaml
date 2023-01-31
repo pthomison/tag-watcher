@@ -67,6 +67,8 @@ spec:
               matched-tags:
                 additionalProperties:
                   properties:
+                    destination-digest:
+                      type: string
                     source-digest:
                       type: string
                     tag:
