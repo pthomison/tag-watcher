@@ -2,12 +2,12 @@
 Kubernetes CRD/operator that will scan remote docker repositories, match a subset of tags based on user input, and then reflect those images (with user-specificed changes) to another docker repository
 
 ## Description
-A personal kubebuilder project, the aim is to give cluster operators an easy way to add customizations to vendored OCI images. The advantage to using this method vs the standard Dockerfile is that for vendored images that tag via release version && release often, you can have a background process continueing providing *your* customized images on that same release schedule. As with most devops discussions, there are 100+ ways to solve this problem, but this one is mine :) My personal use comprises of k3d clusters running with local registries, the operator with pull from dockerhub (or whatever registry the vendor uses), then add some packages/tweaks, and push to the local k3d registry.
+A personal kubebuilder project, the aim is to give cluster operators an easy way to add customizations to vendored OCI images. The advantage to using this method vs the standard Dockerfile is that for vendored images that tag via release version && release often, you can have a background process continueing providing *your* customized images on that same release schedule. As with most devops discussions, there are 100+ ways to solve this problem, but this one is mine :) My personal use comprises of k3d clusters running with local registries, the operator will pull from dockerhub (or whatever registry the vendor uses), then add some packages/tweaks, and push to the local k3d registry.
 
 This project is very much still in development (TODO: remove this when the previous paragraph is fully possible)
 
 Big TODOs
-- Need a way to hit a docker socket inside the cluster, hoping to use DIND container, but need to do some research/testing
+- ~~Need a way to hit a docker socket inside the cluster, hoping to use DIND container, but need to do some research/testing~~
 - Tests.... test test test
 - Way to invoke the logic outside of the controller; ie some kind of CLI
 - Report errors with the push to second registry
