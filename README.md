@@ -11,6 +11,8 @@ Big TODOs
 - Tests.... test test test
 - Way to invoke the logic outside of the controller; ie some kind of CLI
 - Report errors with the push to second registry
+- Document deployment steps in README
+- Helm Chart For Deployments (can kubebuilder do this automatically?)
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
