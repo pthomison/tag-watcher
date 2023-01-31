@@ -1,6 +1,8 @@
-
+TAG ?= $(shell git rev-parse --short HEAD)
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= 127.0.0.1:15555/tag-watcher-controller:$(TAG)
+# Image URL to use for deployment
+DEPLOY_IMG ?= 127.0.0.1:15555/tag-watcher-controller:$(TAG)
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.25.0
 
