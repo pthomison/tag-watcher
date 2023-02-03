@@ -27,7 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/pthomison/tag-watcher/api/v1alpha1"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
 	"github.com/pthomison/tag-watcher/pkg/containerutils"
 	"github.com/pthomison/tag-watcher/pkg/registryutils"
@@ -75,7 +74,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Add a MatchedTagStatus object for desired tags
 	for _, t := range tags {
 		if regexFunc(t) && tr.Status.MatchedTags[t] == nil {
-			tr.Status.MatchedTags[t] = &v1alpha1.MatchedTagStatus{
+			tr.Status.MatchedTags[t] = &tagreflectorv1alpha1.MatchedTagStatus{
 				Tag: t,
 			}
 		}
@@ -136,13 +135,13 @@ func (r *TagReflectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // Utility Wrapper Functions
 
-func (r *TagReflectorReconciler) Get(ctx context.Context, name types.NamespacedName) (*v1alpha1.TagReflector, error) {
-	tr := &v1alpha1.TagReflector{}
+func (r *TagReflectorReconciler) Get(ctx context.Context, name types.NamespacedName) (*tagreflectorv1alpha1.TagReflector, error) {
+	tr := &tagreflectorv1alpha1.TagReflector{}
 	err := r.Client.Get(ctx, name, tr)
 	return tr, err
 }
 
-func (r *TagReflectorReconciler) StatusUpdate(ctx context.Context, tr *v1alpha1.TagReflector) error {
+func (r *TagReflectorReconciler) StatusUpdate(ctx context.Context, tr *tagreflectorv1alpha1.TagReflector) error {
 	err := r.Status().Update(ctx, tr)
 	return err
 }
