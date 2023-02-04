@@ -44,19 +44,19 @@ func headImage(image string) (*v1.Descriptor, error) {
 }
 
 // Currently Unused
-// func CopyImage(src string, dest string) {
-// 	ref, err := name.ParseReference(src)
-// 	errcheck.Check(err)
+func CopyImage(src string, dest string) {
+	ref, err := name.ParseReference(src)
+	errcheck.Check(err)
 
-// 	remoteRef, err := name.ParseReference(dest)
-// 	errcheck.Check(err)
+	remoteRef, err := name.ParseReference(dest)
+	errcheck.Check(err)
 
-// 	image, err := remote.Image(ref)
-// 	errcheck.Check(err)
+	image, err := remote.Image(ref)
+	errcheck.Check(err)
 
-// 	err = remote.Write(remoteRef, image)
-// 	errcheck.Check(err)
-// }
+	err = remote.Write(remoteRef, image)
+	errcheck.Check(err)
+}
 
 // func CatalogRegistry(registryStr string) []string {
 // 	registry, err := name.NewRegistry(registryStr)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,18 +48,51 @@ var _ = Describe("TagReflector controller", func() {
 			}
 			Expect(k8sClient.Create(ctx, tagReflector)).Should(Succeed())
 
-			time.Sleep(10000 * time.Millisecond)
-
 			name := types.NamespacedName{
 				Name:      TagReflectorName,
 				Namespace: TagReflectorNamespace,
 			}
-			tagReflector = &v1alpha1.TagReflector{}
-			Expect(k8sClient.Get(ctx, name, tagReflector)).Should(Succeed())
 
-			// spew.Dump(tagReflector)
+			waitFor := func(timeout time.Duration, test func(*v1alpha1.TagReflector) bool) {
+				timeoutChan := make(chan bool, 1)
+				go func() {
+					time.Sleep(timeout)
+					timeoutChan <- true
+				}()
+				for {
+					select {
+					case <-timeoutChan:
+						return
+					default:
+						tagReflector = &v1alpha1.TagReflector{}
+						Expect(k8sClient.Get(ctx, name, tagReflector)).Should(Succeed())
 
-			// Expect(len(tagReflector.Status.MatchedTags)).Should(Not(BeZero()))
+						if test(tagReflector) {
+							return
+						}
+					}
+
+				}
+			}
+
+			waitFor(10000*time.Millisecond, func(tr *v1alpha1.TagReflector) bool {
+
+				if len(tr.Status.MatchedTags) != 3 {
+					return false
+				}
+
+				for _, mt := range tr.Status.MatchedTags {
+					if mt.DestinationDigest == "" || mt.SourceDigest == "" {
+						return false
+					}
+				}
+
+				return true
+			})
+
+			spew.Dump(tagReflector)
+
+			Expect(len(tagReflector.Status.MatchedTags)).Should(Not(BeZero()))
 
 		})
 	})

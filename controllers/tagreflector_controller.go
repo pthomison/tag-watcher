@@ -30,7 +30,6 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pthomison/errcheck"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
-	"github.com/pthomison/tag-watcher/pkg/containerutils"
 )
 
 // TagReflectorReconciler reconciles a TagReflector object
@@ -119,15 +118,18 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 
 		// Create a build request && execute it
-		br := containerutils.BuildReqest{
-			CTX:              ctx,
-			Obj:              tr,
-			Tag:              tr.Status.MatchedTags[i].Tag,
-			SourceImage:      sourceImage,
-			DestinationImage: destinationImage,
-		}
-		br.Build()
+		// br := containerutils.BuildReqest{
+		// 	CTX:              ctx,
+		// 	Obj:              tr,
+		// 	Tag:              tr.Status.MatchedTags[i].Tag,
+		// 	SourceImage:      sourceImage,
+		// 	DestinationImage: destinationImage,
+		// }
+		// br.Build()
 
+		CopyImage(sourceImage, destinationImage)
+
+		// Don't update the SourceDigest until imageDone() invocation
 		tr.Status.MatchedTags[i].SourceDigest = sourceHash
 
 		digest, err = GetImageDigest(destinationImage)
