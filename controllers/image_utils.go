@@ -43,7 +43,6 @@ func headImage(image string) (*v1.Descriptor, error) {
 	return desc, nil
 }
 
-// Currently Unused
 func CopyImage(src string, dest string) {
 	ref, err := name.ParseReference(src)
 	errcheck.Check(err)
@@ -66,4 +65,14 @@ func CopyImage(src string, dest string) {
 // 	errcheck.Check(err)
 
 // 	return images
+// }
+
+// func RandomString(n int) string {
+// 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+
+// 	s := make([]rune, n)
+// 	for i := range s {
+// 		s[i] = letters[rand.Intn(len(letters))]
+// 	}
+// 	return string(s)
 // }
