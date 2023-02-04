@@ -22,11 +22,25 @@ import (
 
 // TagReflectorSpec defines the desired state of TagReflector
 type TagReflectorSpec struct {
-	Repository          string      `json:"repository,omitempty"`
-	Regex               TagRegex    `json:"regex,omitempty"`
-	Actions             []TagAction `json:"actions,omitempty"`
-	DestinationRegistry string      `json:"destination,omitempty"`
-	ReflectorSuffix     string      `json:"suffix,omitempty"`
+	SourceRepository    string `json:"source,omitempty"`
+	DestinationRegistry string `json:"destination,omitempty"`
+
+	Regex  TagRegex           `json:"regex,omitempty"`
+	Action TagReflectorPlugin `json:"action,omitempty"`
+	// ReflectorSuffix     string             `json:"suffix,omitempty"`
+}
+
+type TagReflectorPlugin struct {
+	Copy        *TagCopyPlugin        `json:"copy,omitempty"`
+	DockerBuild *TagDockerBuildPlugin `json:"docker-build,omitempty"`
+}
+
+type TagCopyPlugin struct {
+}
+
+type TagDockerBuildPlugin struct {
+	Commands []CommandAction `json:"commands,omitempty"`
+	Suffix   string          `json:"suffix,omitempty"`
 }
 
 type TagRegex struct {
@@ -34,9 +48,9 @@ type TagRegex struct {
 	Ignore string `json:"ignore,omitempty"`
 }
 
-type TagAction struct {
-	Command *CommandAction `json:"command,omitempty"`
-}
+// type TagAction struct {
+// 	Command *CommandAction `json:"command,omitempty"`
+// }
 
 type CommandAction struct {
 	Args []string `json:"args,omitempty"`

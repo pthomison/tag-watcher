@@ -12,7 +12,6 @@ import (
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/pthomison/errcheck"
-	"github.com/pthomison/tag-watcher/pkg/utils"
 )
 
 type Request struct {
@@ -31,7 +30,7 @@ func NewRequest() *Request {
 }
 
 func (r *Request) CreateContainer(c *container.Config) string {
-	containerName := fmt.Sprintf("%v-%v", "testing", utils.RandomString(10))
+	containerName := fmt.Sprintf("%v-%v", "testing", "abcdefg")
 
 	id, err := r.client.ContainerCreate(r.ctx, c, &container.HostConfig{}, &network.NetworkingConfig{}, &v1.Platform{}, containerName)
 	errcheck.Check(err)

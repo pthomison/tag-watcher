@@ -35,18 +35,25 @@ spec:
           spec:
             description: TagReflectorSpec defines the desired state of TagReflector
             properties:
-              actions:
-                items:
-                  properties:
-                    command:
-                      properties:
-                        args:
-                          items:
-                            type: string
-                          type: array
-                      type: object
-                  type: object
-                type: array
+              action:
+                properties:
+                  copy:
+                    type: object
+                  docker-build:
+                    properties:
+                      commands:
+                        items:
+                          properties:
+                            args:
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        type: array
+                      suffix:
+                        type: string
+                    type: object
+                type: object
               destination:
                 type: string
               regex:
@@ -56,9 +63,7 @@ spec:
                   match:
                     type: string
                 type: object
-              repository:
-                type: string
-              suffix:
+              source:
                 type: string
             type: object
           status:

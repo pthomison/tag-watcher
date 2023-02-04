@@ -36,9 +36,9 @@ func (b *BuildReqest) Build() string {
 	})
 	defer cli.DeleteContainer(buildContainer)
 
-	for _, action := range b.Obj.Spec.Actions {
-		cli.ExecContainer(buildContainer, action.Command.Args)
-	}
+	// for _, action := range b.Obj.Spec.Actions {
+	// 	cli.ExecContainer(buildContainer, action.Command.Args)
+	// }
 
 	hash := cli.CommitContainer(buildContainer, b.DestinationImage)
 	cli.PushImage(b.DestinationImage)

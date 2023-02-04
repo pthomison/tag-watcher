@@ -9,15 +9,17 @@ metadata:
     app.kubernetes.io/created-by: tag-watcher
   name: tagreflector-sample
 spec:
-  repository: docker.io/library/python
+  source: docker.io/library/python
   destination: 127.0.0.1:15000/python
   # destination: registry.localhost:15000/python
-  suffix: "testing"
+  # suffix: "testing"
   regex: 
     match: "3.9.16-alpine(.*)"
     ignore: "windows"
-  actions:
-  - command:
-      args:
-      - echo
-      - "hello world"
+  action:
+    copy: {}
+  # actions:
+  # - command:
+  #     args:
+  #     - echo
+  #     - "hello world"

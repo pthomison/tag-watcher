@@ -61,7 +61,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	ignore := regexp.MustCompile(tr.Spec.Regex.Ignore)
 
 	// Find All Tags Associated With The Spec Repository
-	tags := ListRepository(tr.Spec.Repository)
+	tags := ListRepository(tr.Spec.SourceRepository)
 
 	// Create The Status Map If Needed
 	if tr.Status.MatchedTags == nil {
@@ -88,7 +88,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	for i := range tr.Status.MatchedTags {
-		sourceImage := fmt.Sprintf("%v:%v", tr.Spec.Repository, tr.Status.MatchedTags[i].Tag)
+		sourceImage := fmt.Sprintf("%v:%v", tr.Spec.SourceRepository, tr.Status.MatchedTags[i].Tag)
 
 		digest, err := GetImageDigest(sourceImage)
 		errcheck.Check(err)
@@ -97,11 +97,12 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		var destinationImage string
 
-		if tr.Spec.ReflectorSuffix == "" {
-			destinationImage = fmt.Sprintf("%v:%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag)
-		} else {
-			destinationImage = fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
-		}
+		// if tr.Spec.ReflectorSuffix == "" {
+		// 	destinationImage = fmt.Sprintf("%v:%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag)
+		// } else {
+		// 	destinationImage = fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
+		// }
+		destinationImage = fmt.Sprintf("%v:%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag)
 
 		destinationHash, _ := GetImageDigest(destinationImage)
 
@@ -127,7 +128,16 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		// }
 		// br.Build()
 
-		CopyImage(sourceImage, destinationImage)
+		// Exec Plugins
+		a := tr.Spec.Action
+		switch {
+		case a.DockerBuild != nil:
+
+		case a.Copy != nil:
+			CopyImage(sourceImage, destinationImage)
+		default:
+			CopyImage(sourceImage, destinationImage)
+		}
 
 		// Don't update the SourceDigest until imageDone() invocation
 		tr.Status.MatchedTags[i].SourceDigest = sourceHash
