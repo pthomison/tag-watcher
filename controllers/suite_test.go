@@ -101,11 +101,11 @@ var _ = BeforeSuite(func() {
 	go func() {
 		defer GinkgoRecover()
 
-		// registryServer = httptest.NewServer(registry.New())
+		registryServer = httptest.NewServer(registry.New())
 
-		var err error
-		registryServer, err = registry.TLS("registry.pthomison.com")
-		Expect(err).ToNot(HaveOccurred())
+		// var err error
+		// registryServer, err = registry.TLS("registry.pthomison.com")
+		// Expect(err).ToNot(HaveOccurred())
 
 		//
 		// http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -118,6 +118,7 @@ var _ = BeforeSuite(func() {
 		Expect(registryServer).NotTo(BeNil())
 	}()
 
+	// wait for registy to be available
 	for {
 		if registryUrl != "" {
 			break

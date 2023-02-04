@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/pthomison/errcheck"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
 	"github.com/pthomison/tag-watcher/pkg/containerutils"
@@ -131,7 +132,8 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		digest, err = registryutils.GetImageDigest(destinationImage)
 		if err != nil {
-			panic(err)
+			spew.Dump(registryutils.ListRepository(tr.Spec.DestinationRegistry))
+			errcheck.Check(err)
 		}
 
 		tr.Status.MatchedTags[i].DestinationDigest = digest

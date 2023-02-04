@@ -1,6 +1,7 @@
 package registryutils
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 
@@ -120,12 +121,12 @@ func ListRepository(repoStr string) []string {
 	return tags
 }
 
-// func CatalogRegistry(registryStr string) []string {
-// 	registry, err := name.NewRegistry(registryStr)
-// 	errcheck.Check(err)
+func CatalogRegistry(registryStr string) []string {
+	registry, err := name.NewRegistry(registryStr)
+	errcheck.Check(err)
 
-// 	images, err := remote.Catalog(context.Background(), registry)
-// 	errcheck.Check(err)
+	images, err := remote.Catalog(context.Background(), registry)
+	errcheck.Check(err)
 
-// 	return images
-// }
+	return images
+}

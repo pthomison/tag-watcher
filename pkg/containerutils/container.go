@@ -3,7 +3,7 @@ package containerutils
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -77,7 +77,10 @@ func (r *Request) CommitContainer(id string, ref string) string {
 func (r *Request) PullImage(image string) {
 	body, err := r.client.ImagePull(r.ctx, image, types.ImagePullOptions{})
 	errcheck.Check(err)
-	ioutil.ReadAll(body)
+
+	_, err = io.ReadAll(body)
+	errcheck.Check(err)
+
 	err = body.Close()
 	errcheck.Check(err)
 }
@@ -87,7 +90,10 @@ func (r *Request) PushImage(image string) {
 		RegistryAuth: "123",
 	})
 	errcheck.Check(err)
-	ioutil.ReadAll(body)
+
+	_, err = io.ReadAll(body)
+	errcheck.Check(err)
+
 	err = body.Close()
 	errcheck.Check(err)
 }

@@ -47,7 +47,7 @@ var _ = Describe("TagReflector controller", func() {
 			}
 			Expect(k8sClient.Create(ctx, tagReflector)).Should(Succeed())
 
-			time.Sleep(5000 * time.Millisecond)
+			time.Sleep(10000 * time.Millisecond)
 
 			name := types.NamespacedName{
 				Name:      TagReflectorName,
