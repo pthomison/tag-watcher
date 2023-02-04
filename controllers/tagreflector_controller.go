@@ -31,7 +31,6 @@ import (
 	"github.com/pthomison/errcheck"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
 	"github.com/pthomison/tag-watcher/pkg/containerutils"
-	"github.com/pthomison/tag-watcher/pkg/registryutils"
 )
 
 // TagReflectorReconciler reconciles a TagReflector object
@@ -49,10 +48,11 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Reqest TagReflector Object
 	tr, err := r.Get(ctx, req.NamespacedName)
-
 	if client.IgnoreNotFound(err) != nil {
+		// requeue in hopes that the error is transient
 		return ctrl.Result{}, err
 	} else if err != nil {
+		// if object has been deleted, ignore
 		return ctrl.Result{}, nil
 	}
 
@@ -62,7 +62,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	ignore := regexp.MustCompile(tr.Spec.Regex.Ignore)
 
 	// Find All Tags Associated With The Spec Repository
-	tags := registryutils.ListRepository(tr.Spec.Repository)
+	tags := ListRepository(tr.Spec.Repository)
 
 	// Create The Status Map If Needed
 	if tr.Status.MatchedTags == nil {
@@ -91,7 +91,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	for i := range tr.Status.MatchedTags {
 		sourceImage := fmt.Sprintf("%v:%v", tr.Spec.Repository, tr.Status.MatchedTags[i].Tag)
 
-		digest, err := registryutils.GetImageDigest(sourceImage)
+		digest, err := GetImageDigest(sourceImage)
 		errcheck.Check(err)
 
 		sourceHash := digest
@@ -104,7 +104,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			destinationImage = fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
 		}
 
-		destinationHash, _ := registryutils.GetImageDigest(destinationImage)
+		destinationHash, _ := GetImageDigest(destinationImage)
 
 		imageDone := func() bool {
 			return sourceHash != "" &&
@@ -130,9 +130,9 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		tr.Status.MatchedTags[i].SourceDigest = sourceHash
 
-		digest, err = registryutils.GetImageDigest(destinationImage)
+		digest, err = GetImageDigest(destinationImage)
 		if err != nil {
-			spew.Dump(registryutils.ListRepository(tr.Spec.DestinationRegistry))
+			spew.Dump(ListRepository(tr.Spec.DestinationRegistry))
 			errcheck.Check(err)
 		}
 
