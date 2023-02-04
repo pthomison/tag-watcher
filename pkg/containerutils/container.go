@@ -78,7 +78,8 @@ func (r *Request) PullImage(image string) {
 	body, err := r.client.ImagePull(r.ctx, image, types.ImagePullOptions{})
 	errcheck.Check(err)
 	ioutil.ReadAll(body)
-	body.Close()
+	err = body.Close()
+	errcheck.Check(err)
 }
 
 func (r *Request) PushImage(image string) {
@@ -87,5 +88,6 @@ func (r *Request) PushImage(image string) {
 	})
 	errcheck.Check(err)
 	ioutil.ReadAll(body)
-	body.Close()
+	err = body.Close()
+	errcheck.Check(err)
 }

@@ -44,12 +44,13 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg         *rest.Config
-	k8sClient   client.Client // You'll be using this client in your tests.
-	testEnv     *envtest.Environment
-	ctx         context.Context
-	cancel      context.CancelFunc
-	registryUrl string
+	cfg            *rest.Config
+	k8sClient      client.Client // You'll be using this client in your tests.
+	testEnv        *envtest.Environment
+	ctx            context.Context
+	cancel         context.CancelFunc
+	registryUrl    string
+	registryServer *httptest.Server
 )
 
 // Bootstrap Ginko
@@ -99,19 +100,29 @@ var _ = BeforeSuite(func() {
 
 	go func() {
 		defer GinkgoRecover()
-		// registry := registry.New()
-		s := httptest.NewServer(registry.New())
-		defer s.Close()
 
-		u, err := url.Parse(s.URL)
+		// registryServer = httptest.NewServer(registry.New())
+
+		var err error
+		registryServer, err = registry.TLS("registry.pthomison.com")
+		Expect(err).ToNot(HaveOccurred())
+
+		//
+		// http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+		u, err := url.Parse(registryServer.URL)
 		Expect(err).ToNot(HaveOccurred())
 
 		registryUrl = fmt.Sprintf("%v%v", u.Host, u.Path)
 
-		// fmt.Println(registryUrl)
-
-		Expect(s).NotTo(BeNil())
+		Expect(registryServer).NotTo(BeNil())
 	}()
+
+	for {
+		if registryUrl != "" {
+			break
+		}
+	}
 
 	go func() {
 		defer GinkgoRecover()
@@ -123,6 +134,7 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	cancel()
+	registryServer.Close()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

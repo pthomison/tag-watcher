@@ -25,6 +25,8 @@ func (b *BuildReqest) Build() string {
 
 	fmt.Printf("Building %v\n", b.DestinationImage)
 
+	// spew.Dump(b)
+
 	cli := NewRequest()
 	cli.PullImage(b.SourceImage)
 

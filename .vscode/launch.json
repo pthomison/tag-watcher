@@ -5,11 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Package",
+            "name": "Controller",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "."
+        },
+        {
+            "name": "Ginko Tests",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            // "port": 2345,
+            // "host": "127.0.0.1",
+            "program": "${fileDirname}/../controllers",
+            "env": {
+                "KUBEBUILDER_ASSETS": "/Users/pthomison/Projects/kubernetes/operators/tag-watcher/bin/k8s/1.25.0-darwin-arm64"
+            },
+            "args": [
+                "-test.v",
+                "--ginkgo.trace"
+            ],
+            "showLog": true
         }
     ]
 }

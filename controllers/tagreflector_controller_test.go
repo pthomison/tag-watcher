@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,9 +19,9 @@ var _ = Describe("TagReflector controller", func() {
 		TagReflectorName      = "test-tag-reflector"
 		TagReflectorNamespace = "default"
 
-		timeout  = time.Second * 10
-		duration = time.Second * 10
-		interval = time.Millisecond * 250
+		// timeout  = time.Second * 10
+		// duration = time.Second * 10
+		// interval = time.Millisecond * 250
 	)
 
 	Context("Basic Tag Reflector - Copy Definition", func() {
@@ -48,7 +47,7 @@ var _ = Describe("TagReflector controller", func() {
 			}
 			Expect(k8sClient.Create(ctx, tagReflector)).Should(Succeed())
 
-			time.Sleep(10000 * time.Millisecond)
+			time.Sleep(5000 * time.Millisecond)
 
 			name := types.NamespacedName{
 				Name:      TagReflectorName,
@@ -57,7 +56,7 @@ var _ = Describe("TagReflector controller", func() {
 			tagReflector = &v1alpha1.TagReflector{}
 			Expect(k8sClient.Get(ctx, name, tagReflector)).Should(Succeed())
 
-			spew.Dump(tagReflector)
+			// spew.Dump(tagReflector)
 
 			// Expect(len(tagReflector.Status.MatchedTags)).Should(Not(BeZero()))
 

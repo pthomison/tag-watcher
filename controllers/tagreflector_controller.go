@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/pthomison/errcheck"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
 	"github.com/pthomison/tag-watcher/pkg/containerutils"
 	"github.com/pthomison/tag-watcher/pkg/registryutils"
@@ -88,7 +89,11 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	for i := range tr.Status.MatchedTags {
 		sourceImage := fmt.Sprintf("%v:%v", tr.Spec.Repository, tr.Status.MatchedTags[i].Tag)
-		sourceHash := registryutils.GetImageDigest(sourceImage)
+
+		digest, err := registryutils.GetImageDigest(sourceImage)
+		errcheck.Check(err)
+
+		sourceHash := digest
 
 		var destinationImage string
 
@@ -98,7 +103,7 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			destinationImage = fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
 		}
 
-		destinationHash := registryutils.GetImageDigest(destinationImage)
+		destinationHash, _ := registryutils.GetImageDigest(destinationImage)
 
 		imageDone := func() bool {
 			return sourceHash != "" &&
@@ -123,7 +128,15 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		br.Build()
 
 		tr.Status.MatchedTags[i].SourceDigest = sourceHash
-		tr.Status.MatchedTags[i].DestinationDigest = registryutils.GetImageDigest(destinationImage)
+
+		digest, err = registryutils.GetImageDigest(destinationImage)
+		if err != nil {
+			panic(err)
+		}
+
+		tr.Status.MatchedTags[i].DestinationDigest = digest
+
+		// spew.Dump(tr.Status.MatchedTags[i])
 
 		// Update the status with the image hash
 		err = r.StatusUpdate(ctx, tr)
