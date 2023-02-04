@@ -90,7 +90,14 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		sourceImage := fmt.Sprintf("%v:%v", tr.Spec.Repository, tr.Status.MatchedTags[i].Tag)
 		sourceHash := registryutils.GetImageDigest(sourceImage)
 
-		destinationImage := fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
+		var destinationImage string
+
+		if tr.Spec.ReflectorSuffix == "" {
+			destinationImage = fmt.Sprintf("%v:%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag)
+		} else {
+			destinationImage = fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
+		}
+
 		destinationHash := registryutils.GetImageDigest(destinationImage)
 
 		imageDone := func() bool {
@@ -107,9 +114,11 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		// Create a build request && execute it
 		br := containerutils.BuildReqest{
-			CTX: ctx,
-			Obj: tr,
-			Tag: tr.Status.MatchedTags[i].Tag,
+			CTX:              ctx,
+			Obj:              tr,
+			Tag:              tr.Status.MatchedTags[i].Tag,
+			SourceImage:      sourceImage,
+			DestinationImage: destinationImage,
 		}
 		br.Build()
 

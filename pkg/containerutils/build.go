@@ -10,24 +10,26 @@ import (
 )
 
 type BuildReqest struct {
-	CTX context.Context
-	Obj *v1alpha1.TagReflector
-	Tag string
+	CTX              context.Context
+	Obj              *v1alpha1.TagReflector
+	Tag              string
+	SourceImage      string
+	DestinationImage string
 }
 
 func (b *BuildReqest) Build() string {
 	_ = log.FromContext(b.CTX)
 
-	baseImage := fmt.Sprintf("%v:%v", b.Obj.Spec.Repository, b.Tag)
-	destImage := fmt.Sprintf("%v:%v-%v", b.Obj.Spec.DestinationRegistry, b.Tag, b.Obj.Spec.ReflectorSuffix)
+	// baseImage := fmt.Sprintf("%v:%v", b.Obj.Spec.Repository, b.Tag)
+	// destImage := fmt.Sprintf("%v:%v-%v", b.Obj.Spec.DestinationRegistry, b.Tag, b.Obj.Spec.ReflectorSuffix)
 
-	fmt.Printf("Building %v\n", destImage)
+	fmt.Printf("Building %v\n", b.DestinationImage)
 
 	cli := NewRequest()
-	cli.PullImage(baseImage)
+	cli.PullImage(b.SourceImage)
 
 	buildContainer := cli.StartContainer(&container.Config{
-		Image: baseImage,
+		Image: b.SourceImage,
 		Cmd:   []string{"sleep", "9999"},
 	})
 	defer cli.DeleteContainer(buildContainer)
@@ -36,8 +38,8 @@ func (b *BuildReqest) Build() string {
 		cli.ExecContainer(buildContainer, action.Command.Args)
 	}
 
-	hash := cli.CommitContainer(buildContainer, destImage)
-	cli.PushImage(destImage)
+	hash := cli.CommitContainer(buildContainer, b.DestinationImage)
+	cli.PushImage(b.DestinationImage)
 
 	return hash
 }

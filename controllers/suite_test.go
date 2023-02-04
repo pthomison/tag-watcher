@@ -18,9 +18,13 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-containerregistry/pkg/registry"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -40,13 +44,16 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg       *rest.Config
-	k8sClient client.Client // You'll be using this client in your tests.
-	testEnv   *envtest.Environment
-	ctx       context.Context
-	cancel    context.CancelFunc
+	cfg         *rest.Config
+	k8sClient   client.Client // You'll be using this client in your tests.
+	testEnv     *envtest.Environment
+	ctx         context.Context
+	cancel      context.CancelFunc
+	registryUrl string
 )
 
+// Bootstrap Ginko
+// https://onsi.github.io/ginkgo/
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
 
@@ -92,6 +99,22 @@ var _ = BeforeSuite(func() {
 
 	go func() {
 		defer GinkgoRecover()
+		// registry := registry.New()
+		s := httptest.NewServer(registry.New())
+		defer s.Close()
+
+		u, err := url.Parse(s.URL)
+		Expect(err).ToNot(HaveOccurred())
+
+		registryUrl = fmt.Sprintf("%v%v", u.Host, u.Path)
+
+		// fmt.Println(registryUrl)
+
+		Expect(s).NotTo(BeNil())
+	}()
+
+	go func() {
+		defer GinkgoRecover()
 		err = k8sManager.Start(ctx)
 		Expect(err).ToNot(HaveOccurred(), "failed to run manager")
 	}()
@@ -99,6 +122,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	cancel()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
