@@ -95,14 +95,13 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 		sourceHash := digest
 
-		var destinationImage string
-
+		// var destinationImage string
 		// if tr.Spec.ReflectorSuffix == "" {
 		// 	destinationImage = fmt.Sprintf("%v:%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag)
 		// } else {
 		// 	destinationImage = fmt.Sprintf("%v:%v-%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag, tr.Spec.ReflectorSuffix)
 		// }
-		destinationImage = fmt.Sprintf("%v:%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag)
+		destinationImage := fmt.Sprintf("%v:%v", tr.Spec.DestinationRegistry, tr.Status.MatchedTags[i].Tag)
 
 		destinationHash, _ := GetImageDigest(destinationImage)
 
