@@ -1,4 +1,4 @@
-package containerutils
+package controllers
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-
 	"github.com/pthomison/errcheck"
 )
 
@@ -30,7 +29,7 @@ func NewRequest() *Request {
 }
 
 func (r *Request) CreateContainer(c *container.Config) string {
-	containerName := fmt.Sprintf("%v-%v", "testing", "abcdefg")
+	containerName := fmt.Sprintf("%v-%v", "testing", RandomString(10))
 
 	id, err := r.client.ContainerCreate(r.ctx, c, &container.HostConfig{}, &network.NetworkingConfig{}, &v1.Platform{}, containerName)
 	errcheck.Check(err)

@@ -44,13 +44,15 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	cfg            *rest.Config
-	k8sClient      client.Client // You'll be using this client in your tests.
-	testEnv        *envtest.Environment
-	ctx            context.Context
-	cancel         context.CancelFunc
-	registryUrl    string
-	registryServer *httptest.Server
+	cfg             *rest.Config
+	k8sClient       client.Client // You'll be using this client in your tests.
+	testEnv         *envtest.Environment
+	ctx             context.Context
+	cancel          context.CancelFunc
+	srcRegistry     *httptest.Server
+	srcRegistryUrl  string
+	destRegistry    *httptest.Server
+	destRegistryUrl string
 )
 
 // Bootstrap Ginko
@@ -101,7 +103,21 @@ var _ = BeforeSuite(func() {
 	go func() {
 		defer GinkgoRecover()
 
-		registryServer = httptest.NewServer(registry.New())
+		extract := func(s *httptest.Server) string {
+			u, err := url.Parse(s.URL)
+			Expect(err).ToNot(HaveOccurred())
+
+			r := fmt.Sprintf("%v%v", u.Host, u.Path)
+
+			Expect(r).NotTo(BeNil())
+
+			return r
+		}
+
+		srcRegistry = httptest.NewServer(registry.New())
+		destRegistry = httptest.NewServer(registry.New())
+		srcRegistryUrl = extract(srcRegistry)
+		destRegistryUrl = extract(destRegistry)
 
 		// var err error
 		// registryServer, err = registry.TLS("registry.pthomison.com")
@@ -110,17 +126,11 @@ var _ = BeforeSuite(func() {
 		//
 		// http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-		u, err := url.Parse(registryServer.URL)
-		Expect(err).ToNot(HaveOccurred())
-
-		registryUrl = fmt.Sprintf("%v%v", u.Host, u.Path)
-
-		Expect(registryServer).NotTo(BeNil())
 	}()
 
-	// wait for registy to be available
+	// wait for registies to be available
 	for {
-		if registryUrl != "" {
+		if srcRegistryUrl != "" && destRegistryUrl != "" {
 			break
 		}
 	}
@@ -135,7 +145,8 @@ var _ = BeforeSuite(func() {
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	cancel()
-	registryServer.Close()
+	srcRegistry.Close()
+	destRegistry.Close()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })

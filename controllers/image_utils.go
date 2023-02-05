@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"crypto/tls"
+	"math/rand"
 	"net/http"
 
 	"github.com/google/go-containerregistry/pkg/name"
@@ -43,20 +44,6 @@ func headImage(image string) (*v1.Descriptor, error) {
 	return desc, nil
 }
 
-func CopyImage(src string, dest string) {
-	ref, err := name.ParseReference(src)
-	errcheck.Check(err)
-
-	remoteRef, err := name.ParseReference(dest)
-	errcheck.Check(err)
-
-	image, err := remote.Image(ref)
-	errcheck.Check(err)
-
-	err = remote.Write(remoteRef, image)
-	errcheck.Check(err)
-}
-
 // func CatalogRegistry(registryStr string) []string {
 // 	registry, err := name.NewRegistry(registryStr)
 // 	errcheck.Check(err)
@@ -67,12 +54,12 @@ func CopyImage(src string, dest string) {
 // 	return images
 // }
 
-// func RandomString(n int) string {
-// 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+func RandomString(n int) string {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-// 	s := make([]rune, n)
-// 	for i := range s {
-// 		s[i] = letters[rand.Intn(len(letters))]
-// 	}
-// 	return string(s)
-// }
+	s := make([]rune, n)
+	for i := range s {
+		s[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(s)
+}
