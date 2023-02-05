@@ -60,6 +60,8 @@ func (r *TagReflectorReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	match := regexp.MustCompile(tr.Spec.Regex.Match)
 	ignore := regexp.MustCompile(tr.Spec.Regex.Ignore)
 
+	spew.Dump(tr)
+
 	// Find All Tags Associated With The Spec Repository
 	tags := ListRepository(tr.Spec.SourceRepository)
 

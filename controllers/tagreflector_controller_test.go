@@ -38,10 +38,10 @@ var _ = Describe("TagReflector controller", func() {
 					Namespace: TagReflectorNamespace,
 				},
 				Spec: v1alpha1.TagReflectorSpec{
-					SourceRepository:    "docker.io/library/python",
-					DestinationRegistry: fmt.Sprintf("%v/python", destRegistryUrl),
+					SourceRepository:    fmt.Sprintf("%v/random", srcRegistryUrl),
+					DestinationRegistry: fmt.Sprintf("%v/random", destRegistryUrl),
 					Regex: v1alpha1.TagRegex{
-						Match:  "3.9.16-alpine(.*)",
+						Match:  "(.*)",
 						Ignore: "windows",
 					},
 				},

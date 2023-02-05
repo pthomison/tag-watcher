@@ -25,6 +25,8 @@ import (
 	"testing"
 
 	"github.com/google/go-containerregistry/pkg/registry"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+	"github.com/google/go-containerregistry/pkg/v1/random"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -36,6 +38,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/pthomison/errcheck"
 	tagreflectorv1alpha1 "github.com/pthomison/tag-watcher/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
@@ -134,6 +137,20 @@ var _ = BeforeSuite(func() {
 			break
 		}
 	}
+
+	// generate image
+	randomImage := func() v1.Image {
+		rnd, err := random.Image(1024, 1)
+		errcheck.Check(err)
+		return rnd
+	}
+
+	i := randomImage()
+	imageName := fmt.Sprintf("%v/random:testing", srcRegistryUrl)
+	fmt.Println(imageName)
+
+	mustMoveImage(i, mustParseReference(imageName))
+	fmt.Println(imageName)
 
 	go func() {
 		defer GinkgoRecover()

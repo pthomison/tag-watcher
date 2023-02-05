@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
@@ -42,6 +43,19 @@ func headImage(image string) (*v1.Descriptor, error) {
 	}
 
 	return desc, nil
+}
+
+func mustMoveImage(img v1.Image, dest name.Reference) {
+	spew.Dump(dest)
+	err := remote.Write(dest, img)
+	errcheck.Check(err)
+}
+
+func mustParseReference(s string) name.Reference {
+	ref, err := name.ParseReference(s)
+	spew.Dump(err)
+	errcheck.Check(err)
+	return ref
 }
 
 // func CatalogRegistry(registryStr string) []string {
